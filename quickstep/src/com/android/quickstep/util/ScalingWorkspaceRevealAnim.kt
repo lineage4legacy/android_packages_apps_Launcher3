@@ -121,9 +121,29 @@ class ScalingWorkspaceRevealAnim(
         Animations.cancelOngoingAnimation(workspace)
         Animations.cancelOngoingAnimation(hotseat)
 
-        // Keep home geometry fixed while preserving alpha and spring target sync.
-        WORKSPACE_SCALE_PROPERTY_FACTORY[SCALE_INDEX_WORKSPACE_STATE].setValue(workspace, MAX_SIZE)
-        HOTSEAT_SCALE_PROPERTY_FACTORY[SCALE_INDEX_WORKSPACE_STATE].setValue(hotseat, MAX_SIZE)
+        val fromSize =
+            if (workspace.scaleX != MAX_SIZE) {
+                workspace.scaleX
+            } else {
+                MIN_SIZE
+            }
+
+        // Scale the Workspace and Hotseat around the same pivot.
+        workspace.setPivotToScaleWithSelf(hotseat)
+        animation.addFloat(
+            workspace,
+            WORKSPACE_SCALE_PROPERTY_FACTORY[SCALE_INDEX_WORKSPACE_STATE],
+            fromSize,
+            MAX_SIZE,
+            SCALE_INTERPOLATOR,
+        )
+        animation.addFloat(
+            hotseat,
+            HOTSEAT_SCALE_PROPERTY_FACTORY[SCALE_INDEX_WORKSPACE_STATE],
+            fromSize,
+            MAX_SIZE,
+            SCALE_INTERPOLATOR,
+        )
 
         if (playAlphaReveal) {
             // Fade in quickly at the beginning of the animation, so the content doesn't look like

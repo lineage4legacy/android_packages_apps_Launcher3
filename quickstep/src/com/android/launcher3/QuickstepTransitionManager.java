@@ -693,8 +693,11 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 // Make sure to cache the current animation, so it can be properly interrupted.
                 Animations.Companion.setOngoingAnimation(view, launcherAnimator);
 
-                // Keep home content at rest during app transitions.
-                SCALE_PROPERTY.set(view, 1f);
+                float[] scale = new float[]{view.getScaleX(), scales[1]};
+                ObjectAnimator scaleAnim = ObjectAnimator.ofFloat(view, SCALE_PROPERTY, scale)
+                        .setDuration(CONTENT_SCALE_DURATION);
+                scaleAnim.setInterpolator(DECELERATE_1_5);
+                launcherAnimator.play(scaleAnim);
             });
 
             endListener = () -> {
