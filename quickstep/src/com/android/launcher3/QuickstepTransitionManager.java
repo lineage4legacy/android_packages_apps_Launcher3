@@ -649,13 +649,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 }
             });
 
-            if (!skipAllAppsScale) {
-                SCALE_PROPERTY.set(appsView, scales[0]);
-                ObjectAnimator scale = ObjectAnimator.ofFloat(appsView, SCALE_PROPERTY, scales);
-                scale.setInterpolator(AGGRESSIVE_EASE);
-                scale.setDuration(CONTENT_SCALE_DURATION);
-                launcherAnimator.play(scale);
-            }
+            // UI test: keep app drawer scale fixed; retain fade and cleanup.
+            SCALE_PROPERTY.set(appsView, 1f);
 
             launcherAnimator.play(alpha);
 
@@ -690,7 +685,6 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 // TODO(b/367591368): ideally these animations would be refactored to be
                 //  controlled centrally so each instances doesn't need to care about this
                 //  coordination.
-                float[] scale = new float[]{view.getScaleX(), scales[1]};
 
                 // Cancel any ongoing animations. This is necessary to avoid a conflict between
                 // e.g. the unfinished animation triggered when closing an app back to Home and
@@ -699,10 +693,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 // Make sure to cache the current animation, so it can be properly interrupted.
                 Animations.Companion.setOngoingAnimation(view, launcherAnimator);
 
-                ObjectAnimator scaleAnim = ObjectAnimator.ofFloat(view, SCALE_PROPERTY, scale)
-                        .setDuration(CONTENT_SCALE_DURATION);
-                scaleAnim.setInterpolator(DECELERATE_1_5);
-                launcherAnimator.play(scaleAnim);
+                // Keep home content at rest during app transitions.
+                SCALE_PROPERTY.set(view, 1f);
             });
 
             endListener = () -> {
@@ -739,10 +731,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
         anim.play(alpha);
         overview.setFreezeViewVisibility(true);
 
-        ObjectAnimator scaleAnim = ObjectAnimator.ofFloat(overview, SCALE_PROPERTY, scales);
-        scaleAnim.setInterpolator(AGGRESSIVE_EASE);
-        scaleAnim.setDuration(CONTENT_SCALE_DURATION);
-        anim.play(scaleAnim);
+        SCALE_PROPERTY.set(overview, 1f);
 
         return () -> {
             overview.setFreezeViewVisibility(false);

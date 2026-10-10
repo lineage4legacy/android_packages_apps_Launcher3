@@ -174,8 +174,7 @@ public class ClipIconView extends View implements ClipPathView {
 
         mTaskCornerRadius = cornerRadius / scale;
         if (mIsAdaptiveIcon) {
-            if ((!isOpening || Flags.enableLauncherIconShapes())
-                    && progress >= shapeProgressStart) {
+            if (!isOpening && progress >= shapeProgressStart) {
                 if (mRevealAnimator == null) {
                     ShapeDelegate shape;
                     if (Flags.enableLauncherIconShapes()) {
