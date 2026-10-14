@@ -84,6 +84,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.util.Pair;
 import android.util.TimeUtils;
@@ -1608,7 +1609,9 @@ public abstract class AbsSwipeUpHandler<
         } else if (state.displayOverviewTasksAsGrid(mDp)) {
             interpolator = ACCELERATE_DECELERATE;
         } else if (endTarget == RECENTS) {
-            interpolator = OVERSHOOT_1_2;
+            interpolator = SystemProperties.getBoolean(
+                    "debug.launcher3.recents_no_overshoot", false)
+                    ? DECELERATE : OVERSHOOT_1_2;
         } else {
             interpolator = DECELERATE;
         }
@@ -1641,18 +1644,26 @@ public abstract class AbsSwipeUpHandler<
                             new IllegalStateException());
                 }
 
+                boolean snapImmediately = SystemProperties.getBoolean(
+                        "debug.launcher3.recents_snap_immediately", false);
                 boolean isScrolling = false;
                 if (mRecentsView.getNextPage() != nearestPage) {
                     // We shouldn't really scroll to the next page when swiping up to recents.
                     // Only allow settling on the next page if it's nearest to the center.
-                    mRecentsView.snapToPage(nearestPage, Math.toIntExact(duration));
+                    if (snapImmediately) {
+                        mRecentsView.snapToPageImmediately(nearestPage);
+                    } else {
+                        mRecentsView.snapToPage(nearestPage, Math.toIntExact(duration));
+                    }
                     isScrolling = true;
                 }
-                if (mRecentsView.getScroller().getDuration() > MAX_SWIPE_DURATION) {
+                if (!snapImmediately
+                        && mRecentsView.getScroller().getDuration() > MAX_SWIPE_DURATION) {
                     mRecentsView.snapToPage(mRecentsView.getNextPage(), (int) MAX_SWIPE_DURATION);
                     isScrolling = true;
                 }
-                if (!mGestureState.isHandlingAtomicEvent() || isScrolling) {
+                if (!snapImmediately
+                        && (!mGestureState.isHandlingAtomicEvent() || isScrolling)) {
                     duration = Math.max(duration, mRecentsView.getScroller().getDuration());
                 }
                 SystemUiProxy.INSTANCE.get(mContext).updateContextualEduStats(
