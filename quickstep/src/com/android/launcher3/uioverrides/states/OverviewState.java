@@ -95,6 +95,11 @@ public class OverviewState extends LauncherState {
         } else {
             scale = (float) sTempRect.width() / deviceProfile.getCellLayoutWidth();
         }
+        float scaleAmount = SystemProperties.getFloat(
+                "debug.launcher3.recents_scale_amount", 1f);
+        scaleAmount = Math.max(0f, Math.min(1f, scaleAmount));
+        scale = 1f + (scale - 1f) * scaleAmount;
+
         float parallaxFactor = 0.5f;
         return new ScaleAndTranslation(scale, 0, -getDefaultSwipeHeight(launcher) * parallaxFactor);
     }
