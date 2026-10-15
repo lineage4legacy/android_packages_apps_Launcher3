@@ -246,8 +246,17 @@ CONTAINER : StatefulContainer<STATE_TYPE> {
                 ) {
                     OVERSHOOT_1_2
                 } else {
-                    // Finish when the original curve first reaches its target.
-                    clampToProgress(DECELERATE, 0f, 0.455f)
+                    val settleFraction = (
+                        try {
+                            SystemProperties.get(
+                                "persist.sys.launcher3.recents_horizontal_settle_fraction",
+                                "0.65",
+                            ).toFloat()
+                        } catch (ignored: NumberFormatException) {
+                            0.65f
+                        }
+                    ).coerceIn(0.1f, 1f)
+                    clampToProgress(DECELERATE, 0f, settleFraction)
                 },
             )
             config.setInterpolator(ANIM_OVERVIEW_TRANSLATE_Y, OVERSHOOT_1_2)
