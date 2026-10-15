@@ -246,7 +246,8 @@ CONTAINER : StatefulContainer<STATE_TYPE> {
                 ) {
                     OVERSHOOT_1_2
                 } else {
-                    DECELERATE
+                    // Finish when the original curve first reaches its target.
+                    clampToProgress(DECELERATE, 0f, 0.455f)
                 },
             )
             config.setInterpolator(ANIM_OVERVIEW_TRANSLATE_Y, OVERSHOOT_1_2)
