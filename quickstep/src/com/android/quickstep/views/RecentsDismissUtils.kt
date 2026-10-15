@@ -17,6 +17,7 @@
 package com.android.quickstep.views
 
 import android.app.ActivityTaskManager.INVALID_TASK_ID
+import android.os.SystemProperties
 import android.view.View
 import androidx.core.graphics.toRectF
 import androidx.core.view.children
@@ -195,14 +196,27 @@ constructor(
                 )
             }
         } else if (springSet != null && dismissedTaskView != null) {
-            // Neighbor settling spring animations.
-            val neighborSettlingSpringSet =
-                createNeighborSettlingSpringSet(dismissedTaskView, isSpringDirectionVertical = true)
-            springSet.playAfterThreshold(
-                driverThreshold = dismissedTaskData.finalPosition,
-                triggeredSpringSet = neighborSettlingSpringSet,
-                minVelocity = startVelocity,
-            )
+            // Keep the neighboring task cards still when magnetic detach is disabled.
+            val useMagneticDetach =
+                SystemProperties.getBoolean(
+                    "persist.sys.launcher3.recents_magnetic_detach",
+                    SystemProperties.getBoolean(
+                        "debug.launcher3.recents_magnetic_detach",
+                        false,
+                    ),
+                )
+            if (useMagneticDetach) {
+                val neighborSettlingSpringSet =
+                    createNeighborSettlingSpringSet(
+                        dismissedTaskView,
+                        isSpringDirectionVertical = true,
+                    )
+                springSet.playAfterThreshold(
+                    driverThreshold = dismissedTaskData.finalPosition,
+                    triggeredSpringSet = neighborSettlingSpringSet,
+                    minVelocity = startVelocity,
+                )
+            }
             springSet.addEndListener {
                 InteractionJankMonitorWrapper.cancel(Cuj.CUJ_LAUNCHER_OVERVIEW_TASK_DISMISS)
             }
