@@ -17,6 +17,7 @@ package com.android.launcher3.uioverrides.touchcontrollers
 
 import android.content.Context
 import android.graphics.Rect
+import android.os.SystemProperties
 import android.view.MotionEvent
 import androidx.dynamicanimation.animation.SpringAnimation
 import com.android.app.animation.Interpolators.DECELERATE
@@ -409,11 +410,13 @@ CONTAINER : StatefulContainer<T> {
         val direction = if (initialDisplacement < 0) InputDirection.Max else InputDirection.Min
         val distanceGestureContext =
             DistanceGestureContext.create(context, initialDisplacement, direction)
+        val useMagneticDetach =
+            allowDetach && (SystemProperties.getInt("persist.sys.recents.lite.mode", 0) != 1)
         val viewMotionValue =
             ViewMotionValue(
                 initialDisplacement,
                 distanceGestureContext,
-                generateMotionSpec(detachThreshold),
+                generateMotionSpec(detachThreshold, useMagneticDetach),
                 label = "taskDismiss::displacement",
             )
 
@@ -422,7 +425,10 @@ CONTAINER : StatefulContainer<T> {
     }
 
     /** Motion spec for an initial magnetic detach. Track linearly otherwise. No reattach. */
-    private fun generateMotionSpec(detachThreshold: Float): MotionSpec {
+    private fun generateMotionSpec(
+        detachThreshold: Float,
+        useMagneticDetach: Boolean,
+    ): MotionSpec {
         val spring = SpringParameters(stiffness = 800f, dampingRatio = 0.95f)
         val detachKey = BreakpointKey("TaskDismiss::Detach")
         val breakpoints = mutableListOf<Breakpoint>()
@@ -431,9 +437,13 @@ CONTAINER : StatefulContainer<T> {
         breakpoints.add(minLimit)
         if (allowDetach) {
             mappings.add(Mapping.Identity)
-            breakpoints.add(Breakpoint(detachKey, detachThreshold, spring, Guarantee.None))
+            if (useMagneticDetach) {
+                breakpoints.add(Breakpoint(detachKey, detachThreshold, spring, Guarantee.None))
+                mappings.add(Mapping.Linear(MAGNETIC_DETACH_INTERPOLATION_FRACTION))
+            }
+        } else {
+            mappings.add(Mapping.Linear(MAGNETIC_DETACH_INTERPOLATION_FRACTION))
         }
-        mappings.add(Mapping.Linear(MAGNETIC_DETACH_INTERPOLATION_FRACTION))
         breakpoints.add(maxLimit)
 
         return MotionSpec(DirectionalMotionSpec(breakpoints, mappings))

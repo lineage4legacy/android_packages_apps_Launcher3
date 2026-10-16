@@ -18,6 +18,7 @@ package com.android.quickstep.util
 import android.animation.Animator
 import android.animation.ObjectAnimator
 import android.content.Context
+import android.os.SystemProperties
 import android.view.View
 import androidx.dynamicanimation.animation.DynamicAnimation
 import com.android.app.animation.Interpolators.ACCELERATE
@@ -236,7 +237,14 @@ CONTAINER : StatefulContainer<STATE_TYPE> {
             config.setInterpolator(ANIM_SCRIM_FADE) { t: Float ->
                 OVERSHOOT_1_2.getInterpolation(t).coerceAtMost(1f)
             }
-            config.setInterpolator(ANIM_OVERVIEW_TRANSLATE_X, OVERSHOOT_1_2)
+            config.setInterpolator(
+                ANIM_OVERVIEW_TRANSLATE_X,
+                if (SystemProperties.getInt("persist.sys.recents.lite.mode", 0) == 1) {
+                    clampToProgress(DECELERATE, 0f, 0.70f)
+                } else {
+                    OVERSHOOT_1_2
+                },
+            )
             config.setInterpolator(ANIM_OVERVIEW_TRANSLATE_Y, OVERSHOOT_1_2)
         } else if (fromState == HINT_STATE && toState == NORMAL) {
             config.setInterpolator(ANIM_DEPTH, DECELERATE_3)
